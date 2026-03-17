@@ -20,6 +20,9 @@ WEATHER_CODES = {
     95: "Thunderstorm", 96: "Thunderstorm with slight hail", 99: "Thunderstorm with heavy hail",
 }
 
+# Severe weather codes that trigger a warning
+SEVERE_CODES = {57, 65, 67, 75, 82, 86, 95, 96, 99}
+
 def find_city(identifier):
     """Find city by key or name (case‑insensitive)."""
     if identifier in CITIES:
@@ -75,6 +78,28 @@ def format_forecast(daily, city_name, days):
 
     return "\n".join(lines)
 
+def check_severe_weather(daily):
+    """
+    Scan daily weather codes for severe conditions.
+    Returns a warning string if any are found, otherwise None.
+    """
+    if not daily or not daily.get("time") or not daily.get("weathercode"):
+        return None
+
+    dates = daily["time"]
+    codes = daily["weathercode"]
+
+    severe_days = []
+    for i, code in enumerate(codes):
+        if i < len(dates) and code in SEVERE_CODES:
+            date_str = datetime.strptime(dates[i], "%Y-%m-%d").strftime("%d %b %Y")
+            condition = WEATHER_CODES.get(code, "Unknown")
+            severe_days.append(f"{date_str} ({condition})")
+
+    if severe_days:
+        return "SEVERE WEATHER WARNING: " + ", ".join(severe_days)
+    return None
+
 def check_flood_risk(lat, lon):
     """Flood warning if river discharge exceeds 75th percentile on any of next 7 days."""
     params = {
@@ -95,7 +120,7 @@ def check_flood_risk(lat, lon):
         risky = [date for i, date in enumerate(dates)
                  if i < len(discharge) and i < len(p75) and discharge[i] > p75[i]]
         if risky:
-            return f"⚠️ FLOOD WARNING: River discharge above 75th percentile on: {', '.join(risky)}"
+            return f"FLOOD WARNING: River discharge above 75th percentile on: {', '.join(risky)}"
     except Exception:
         pass
     return None
@@ -164,7 +189,7 @@ def check_drought_risk(lat, lon):
 
     if avg_hist > 0 and forecast_mm < 0.75 * avg_hist:
         month_name = start_next.strftime("%B %Y")
-        return (f"🌵 DROUGHT WARNING: Forecast precipitation for {month_name} "
+        return (f"DROUGHT WARNING: Forecast precipitation for {month_name} "
                 f"({forecast_mm:.1f} mm) is less than 75% of the historical average "
                 f"({avg_hist:.1f} mm).")
     return None
@@ -204,6 +229,10 @@ if __name__ == "__main__":
     print(output)
 
     # Hazard warnings
+    severe_warning = check_severe_weather(forecast)
+    if severe_warning:
+        print("\n" + severe_warning)
+
     flood_warning = check_flood_risk(lat, lon)
     if flood_warning:
         print("\n" + flood_warning)
