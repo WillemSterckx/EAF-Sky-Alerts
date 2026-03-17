@@ -1,0 +1,7 @@
+{
+  "Dar es Salaam": ["subscriber1@example.com", "subscriber2@example.com"],
+  "Arusha": ["subscriber3@example.com"],
+  "Mwanza": ["subscriber4@example.com"],
+  "Dodoma": ["subscriber5@example.com", "subscriber6@example.com"],
+  "Mbeya": ["subscriber7@example.com"]
+}
