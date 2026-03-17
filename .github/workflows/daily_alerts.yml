@@ -1,0 +1,29 @@
+name: Daily Weather Alerts
+
+on:
+  schedule:
+    # Run every day at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from the GitHub Actions UI
+
+jobs:
+  weather-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run daily weather check
+        run: python scheduler.py --run-now
